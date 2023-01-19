@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="js/jquery.mobile-1.4.5.css">
+  <link rel="stylesheet" href="leaflet/leaflet.css"/>
+  <link href="https://playground.anychart.com/docs/samples/WD_Data_Adapter_HTML_Table_01/iframe" rel="canonical">
+  <link href="https://cdn.anychart.com/releases/8.11.0/css/anychart-ui.min.css?hcode=a0c21fc77e1449cc86299c5faa067dc4" rel="stylesheet" type="text/css">
+  <script src="js/jquery.js"></script>
+  <script src="js/jquery.mobile-1.4.5.js"></script>
+  <script type="text/javascript" src="cordova.js"></script>
+  <script src="leaflet/leaflet.js"></script>
+  <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-base.min.js?hcode=a0c21fc77e1449cc86299c5faa067dc4"></script>
+  <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-exports.min.js?hcode=a0c21fc77e1449cc86299c5faa067dc4"></script>
+  <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-data-adapter.min.js?hcode=a0c21fc77e1449cc86299c5faa067dc4"></script>
+  <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-ui.min.js?hcode=a0c21fc77e1449cc86299c5faa067dc4"></script>
+  <script>(function(w, d) { w.CollectId = "62d476f6fbae4770654732db"; var h = d.head || d.getElementsByTagName("head")[0]; var s = d.createElement("script"); s.setAttribute("type", "text/javascript"); s.async=true;
+   s.setAttribute("src", "https://collectcdn.com/launcher.js"); h.appendChild(s); })(window, document);</script>
+  <script type="text/javascript">
+ document.addEventListener("deviceready", onDeviceReady, false);
+ var db;
+ function onDeviceReady(){
+   db=window.openDatabase("ADICREAMDB", "1.0", "Simple Demo", 2*1024*1024);
+    db.transaction(createDB, errorCB, successCB);
+	db.transaction(createMedDB, errorCB, successCB);
+    db.transaction(createDMedDB, errorCB, successCB);
+	db.transaction(createInsDB, errorCB, successCB);
+	db.transaction(createbmiDB, errorCB, successCB);
+   //alert("device ready");
+ }
+
+function createDB(tx){
+  tx.executeSql('CREATE TABLE IF NOT EXISTS sugar(id INT, t_date date, sugar double)');
+}
+
+function createMedDB(tx){
+ tx.executeSql('CREATE TABLE IF NOT EXISTS medication(id INTEGER PRIMARY KEY, name text,units text,dosage double, times_taken int)');
+}
+
+function createDMedDB(tx){
+ tx.executeSql('CREATE TABLE IF NOT EXISTS daily_med( med_date date,name text, med_time text)');
+}
+
+function errorCB(err){
+  //alert("SQL Error: "+err.code);
+}
+
+function successCB(){
+  //alert("Database & Table Created");
+}
+
+/*Insert Sugar Level*/
+function insertDB(tx){
+  var date_c=$("[name='t_date']").val();
+  var sugar_c=$("[name='sugar']").val();
+  var sql='INSERT INTO sugar (t_date, sugar) VALUES (?,?)';
+  tx.executeSql(sql,[date_c,sugar_c], successQueryDB, errorCB);
+}
+function successQueryDB(tx){
+  //alert("Insert Successful");
+  tx.executeSql('SELECT t_date,sugar FROM sugar ORDER BY t_date DESC ', [], renderListCB, errorCB)
+}
+
+
+function renderListCB(tx, results){
+    var len = results.rows.length;
+
+    var s ='<table id="htmlTable" class="htmlTable" cellpadding="2" cellspacing="2" border="1" style="border-collapse:collapse;display:none;">'
+    s += '<tr><th>Date</th><th>Suagr Level</th></tr>';
+    for(var i=0; i<len;i++){
+    var sugar =results.rows.item(i);
+    s +='<tr>'
+    s += '<td>' + sugar.t_date+ '</td>';
+    s += '<td>' + sugar.sugar+ '</td>';
+    s += '</tr>';
+    }
+    s += '</table>';
+    $('#output').html(s);
+
+    anychart.onDocumentReady(function () {
+
+     // create a chart and set the data
+     var chart = anychart.column();
+
+     var tableData = anychart.data.parseHtmlTable("#output");
+
+     chart.data(tableData);
+
+     chart.legend(true);
+
+     // set chart container and draw
+     chart.container("output").draw();
+    });
+  }
+
+  var db = openDatabase("ADICREAMDB", "1.0", "Simple Demo", 2*1024*1024);
+  var msg;
+  db.transaction(function(tx){
+tx.executeSql('create Table if NOT EXISTS sugar(id INT, t_date text,sugar int)');
+  });
+
+  db.transaction(function(tx){
+tx.executeSql('select * from sugar ORDER BY t_date DESC',[],function(tx,results){
+   var len = results.rows.length;
+
+    var s ='<table id="htmlTable" class="htmlTable" cellpadding="5" border="1" style="border-collapse:collapse;display:none;">'
+    s += '<tr><th>Date</th><th>Sugar Level</th></tr>';
+    for(var i=0; i<len;i++){
+    var sugar =results.rows.item(i);
+    s +='<tr>'
+    s += '<td>'+ sugar.t_date+  '</td>';
+    s += '<td>' + sugar.sugar+ '</td>';
+    s += '</tr>';
+    }
+    s += '</table>';
+    $('#output').html(s);
+
+	anychart.onDocumentReady(function () {
+
+     // create a chart and set the data
+     var chart = anychart.column();
+
+     var tableData = anychart.data.parseHtmlTable("#output");
+
+     chart.data(tableData);
+
+     chart.legend(true);
+
+     // set chart container and draw
+     chart.container("output").draw();
+	 })
+    });
+});
+
+ /*Insert Medication Description*/
+function insertMedDB(tx){
+ var name_c=$("[name='name']").val();
+ var units_c=$("[name='units']").val();
+  var dosage_c=$("[name='dosage']").val();
+   var times_taken_c=$("[name='times_taken']").val();
+ var sql='INSERT INTO medication (name, units,dosage,times_taken) VALUES (?,?,?,?)';
+ tx.executeSql(sql,[name_c, units_c,dosage_c,times_taken_c], successMedQueryDB, errorCB);
+}
+function successMedQueryDB(tx){
+ alert("Medicine Inserted Successfully! REFRESH to view data.");
+ tx.executeSql('SELECT name, units,dosage,times_taken FROM medication', [], renderMedCB, renderMedCB)
+}
+
+function renderMedCB(tx, results){
+   var x = results.rows.length;
+
+   var m ='<table id="htmlTable" class="htmlTable" cellpadding="2" cellspacing="2" border="1">'
+   m += '<tr style="color:#008722;><th>NAME</th><th>UNITS</th><th>DOSAGE</th><th>NO Of TIMES</th></tr>';
+   for(var i=0; i<x;i++){
+   var med =results.rows.item(i);
+   m +='<tr>';
+   m += '<td>' + med.name+ '</td>';
+   m += '<td>' + med.units+ '</td>';
+    m += '<td>' + med.dosage+ '</td>';
+     m += '<td>' + med.times_taken+ '</td>';
+   m += '</tr>';
+   }
+   m += '</table>';
+   $('#medications').html(m);
+
+   };
+
+   var db = openDatabase("ADICREAMDB", "1.0", "Simple Demo", 2*1024*1024);
+  db.transaction(function(tx){
+tx.executeSql('create Table if NOT EXISTS medication(id INT, name text,units text,dosage double, times_taken int)');
+  });
+
+  db.transaction(function(tx){
+tx.executeSql('select * from medication',[],function(tx,results){
+  var y = results.rows.length;
+
+ var m ='<table id="htmlTable" class="ui-responsive table-stroke" class="htmlTable" cellpadding="5" border="1" style="border-collapse:collapse;">'
+   m += '<tr style="color:#008722;"><th>NAME</th><th>UNITS</th><th>DOSAGE</th><th>NO Of TIMES</th></tr>';
+   for(var i=0; i<y;i++){
+   var med =results.rows.item(i);
+   m +='<tr>';
+   m += '<td>' + med.name+ '</td>';
+   m += '<td>' + med.units+ '</td>';
+    m += '<td>' + med.dosage+ '</td>';
+     m += '<td>' + med.times_taken+ '</td>';
+   m += '</tr>';
+   }
+   m += '</table>';
+   $('#medications').html(m);
+})
+});
+
+/*Insert Daily Medication*/
+function renderMedCB(tx, results){
+   var x = results.rows.length;
+     var html = "<select name=\"name\">";
+   for(var i=0; i<x;i++){
+   var med =results.rows.item(i);
+    html += "<option value='" +results.rows.item(i).name  + "'>" + results.rows.item(i).name + "</option>";
+                }
+                html += "</select>";
+                var el = document.getElementById("name");
+                el.innerHTML = html;
+
+   };
+ var db = openDatabase("ADICREAMDB", "1.0", "Simple Demo", 2*1024*1024);
+  db.transaction(function(tx){
+tx.executeSql('create Table if NOT EXISTS daily_med( med_date date,d_name text, med_time text)');
+  });
+
+    db.transaction(function (tx) {
+    tx.executeSql('select name from medication', [], function (tx, results){
+            var z = results.rows.length, i;
+            var html = "<select name=\"name\">";
+            for (i = 0; i < z; i++) {
+                html += "<option value='" +results.rows.item(i).name  + "'>" + results.rows.item(i).name + "</option>";
+                }
+                html += "</select>";
+                var el = document.getElementById("name");
+                el.innerHTML = html;
+        })
+    });
+	function insertDMedDB(tx){
+	 var med_date_c=$("[name='med_date']").val();
+	 var d_name_c=$("[name='d_name']").val();
+	  var med_time_c=$("[name='med_time']").val();
+	 var sql='INSERT INTO daily_med (med_date,d_name,med_time) VALUES (?,?,?)';
+	 tx.executeSql(sql,[med_date_c,d_name_c,med_time_c], successDMedQueryDB, errorCB);
+	}
+	function successDMedQueryDB(tx){
+	 alert("Insert Successful");
+	 tx.executeSql('SELECT med_date,d_name,med_time FROM daily_med order by med_date DESC', [], renderDMedCB, errorCB)
+	}
+  </script>
+
+	<title>AD ICREAM</title>
+
+</head>
+
+<body>
+  <div data-role="page" id="homepage" data-theme="a" class="jqm-demos" data-url="panel-fixed-page1">
+    <div data-role="header"  data-position="fixed" data-theme="b">
+      <h1>AD ICREAM</h1>
+      <a href="#home_nav_panel" data-icon="bars" data-iconpos="notext">Flavours</a>
+    </div>
+    <div data-role="main" class="ui-content jqm-content jqm-fullwidth" id="home_body">
+      <div class="w3-content w3-section" style="max-width:500px">
+       <img class="mySlides" src="img/1.jpeg">
+         <img class="mySlides" src="img/9.jpg">
+       <img class="mySlides" src="img/4.jpeg">
+
+        <img class="mySlides" src="img/5.jpg">
+
+
+
+        <img class="mySlides" src="img/6.png">
+      </div>
+      <div onclick="location.href='#info_page';" class="img_container" style="max-width:500px">
+        <img src="img/3.jpeg" alt="" style="">
+        <div class="text_block">Things You Need to Know About Our AD ICREAM</div>
+      </div>
+      <div onclick="location.href='#geolocation_page';" class="img_container" style="max-width:500px">
+        <img src="img/7.png" alt="" style="">
+        <div class="text_block">Geolocation</div>
+      </div>
+      <div onclick="location.href='#order_page';" class="img_container" style="max-width:500px">
+          <img src="img/21.jpg" alt="">
+          <div class="text_block">Order Ice Cream</div>
+        </div>
+        <div onclick="location.href='#calculate_page';" class="img_container" style="max-width:500px">
+            <img src="img/10.jpg" alt="">
+            <div class="text_block">Discount</div>
+          </div>
+    </div>
+    <!-- Panel -->
+    <div data-role="panel" data-position-fixed="true" data-display="push" data-theme="b" id="home_nav_panel">
+      <ul data-role="listview">
+        <li data-icon="delete"><a href="#" data-rel="close">Close menu</a></li>
+        <li data-icon="home"><a href="#homepage" data-rel="close">Home</a></li>
+        <li data-icon="info"><a href="#info_page" data-transition="slideup">Things You Need to Know About AD ICREAM APP</a></li>
+        <li data-icon="location"><a href="#geolocation_page" data-transition="slideup">Geolocation</a></li>
+<li data-icon="shop"><a href="#order_page" data-transition="slideup">Order Ice Cream</a></li>
+<li data-icon="calendar"><a href="#calculate_page" data-transition="slideup">Calculate</a></li>
+      </ul>
+    </div>
+  </div>
+
+<!-- Information Page -->
+  <div data-role="page" id="info_page" data-theme="a" class="jqm-demos" data-url="panel-fixed-page1">
+    <div data-role="header" data-position="fixed" data-theme="b">
+      <a href="#info_nav_panel" data-icon="bars" data-iconpos="notext">Menu</a>
+      <h1></h1>
+    </div>
+
+    <div data-role="main" class="ui-content jqm-content jqm-fullwidth" style="margin-top:-30px;">
+      <div style="max-width:500px">
+        <img src="img/6.jpg" alt="" style="width:100%; height:400px;margin:0;padding:0;">
+      </div>
+      <div>
+        <h1>AD ICREAM</h1>
+        <p>AD ICream was discovered on <b>25th May 2020</b> by Ausrafally Bibi Nootaybah (Aisha) and Chitapain Dishti (Dishti). It is situated at Royal Road, Curepipe.
+      We are hereby specialized in making home-made ice cream with fresh fruits.</p>
+
+        <!-- Type of Ice Cream -->
+        <div data-role="collapsible" data-collapsed-icon="carat-d" data-expanded-icon="carat-u" data-iconpos="right">
+          <h3>Type of Ice Creams</h3>
+          <ul data-role="listview" data-inset="false" style="padding-left:10px;">
+
+            <ul>
+              <li><b>Ice Cream Cake</b></li>
+              <p>Ingredients: Ice cream filling and layers of cake or a swiss roll. </p>
+              <p>Texture: Soft and melting. </p>
+              <li><b>Mochi Ice Cream</b></li>
+              <p>Ingredients: Glutinous pounded rice cover and ice cream filling, natural additives. </p>
+              <p>Texture: Light sweetness and chewy, elastic, smooth texture. </p>
+              <li><b>Gelato Ice Cream</b></li>
+              <p>Ingredients: More milk than cream, doesn’t include eggs and stabilizers.</p>
+                  <p>Texture: Denser and richer texture than other ice cream types.</p>
+              <li><b>Rolled Ice Cream</b></li>
+              <p>Ingredients: Basic components like milk, cream; mixing items like Oreos and strawberries. </p>
+              <p>Texture: Super velvety and smooth texture. </p>
+            </ul>
+          </ul>
+        </div>
+
+        <!-- Symptoms of diabetes -->
+        <div data-role="collapsible" data-collapsed-icon="carat-d" data-expanded-icon="carat-u" data-iconpos="right">
+          <h3>Flavours</h3>
+          <ul data-role="listview" data-inset="false" style="padding-left:10px;">
+
+          </ul>
+          <div class="popup_btn">
+            <center>
+            <a href="#general_symptoms" data-transition="slidedown" class="ui-btn ui-corner-all ui-shadow ui-btn-inline" data-rel="popup" data-position-to="#position-header">Freak Shakes</a>
+            <a href="#men_symptoms" data-transition="slidedown" class="ui-btn ui-corner-all ui-shadow ui-btn-inline" data-rel="popup" data-position-to="#position-header">Mochi Ice Cream</a>
+            <a href="#women_symptoms" data-transition="slidedown" class="ui-btn ui-corner-all ui-shadow ui-btn-inline" data-rel="popup" data-position-to="#position-header">Special Sorbet</a>
+            </center>
+          </div>
+          <!-- General symptoms -->
+          <div data-role="popup" id="general_symptoms" class="ui-content" data-theme="a" data-dismissible="false" style="margin-left:20px;margin-top:30px;" data-overlay-theme="a" >
+            <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-left">Close</a>
+            <div>
+              <h4>Freak Shakes</h4>
+              <p>Different types of freakshake include:</p>
+              <ul>
+                <li>Red Velvet</li>
+                <li>Tofu</li>
+                <li>Mint & Chocolate</li>
+                <li>Almond</li>
+                <li>Vanilla</li>
+                <li>Caramel</li>
+                <li>Marshmallow</li>
+              </ul>
+            </div>
+          </div>
+          <!-- Symptoms in Men -->
+          <div data-role="popup" id="men_symptoms" class="ui-content" data-theme="a" data-dismissible="false" style="margin-left:20px;margin-top:30px;" data-overlay-theme="a" >
+            <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-left">Close</a>
+            <div>
+              <h4>Mochi Ice Cream</h4>
+
+              <ul>
+                <li>Strawberry</li>
+                <li>Chocolate</li>
+                <li>Raspberry</li>
+                <li>Blueberry</li>
+                <li>Passion Fruit</li>
+                  <li>Cherry</li>
+              </ul>
+            </div>
+          </div>
+          <!-- Symptoms in Women -->
+          <div data-role="popup" id="women_symptoms" class="ui-content" data-theme="a" data-dismissible="false" style="margin-left:20px;margin-top:30px;" data-overlay-theme="a" >
+            <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-left">Close</a>
+            <div>
+              <h4>Special Sorbet </h4>
+
+              <ul>
+                <li> Mango & Chilli</li>
+                <li>Pineapple, mint & chilli</li>
+                <li>Lime & Chilli</li>
+                <li>Papaya, lime & chilli</li>
+
+
+              </ul>
+
+            </div>
+          </div>
+        </div>
+
+
+
+
+
+      </div>
+    </div>
+    <!-- Panel -->
+    <div data-role="panel" data-position-fixed="true" data-display="push" data-theme="b" id="info_nav_panel">
+      <ul data-role="listview">
+          <li data-icon="delete"><a href="#" data-rel="close">Close menu</a></li>
+          <li data-icon="home"><a href="#homepage" data-rel="close">Home</a></li>
+          <li data-icon="info"><a href="#info_page" data-transition="slideup">Things You Need to Know About AD ICREAM APP</a></li>
+          <li data-icon="location"><a href="#geolocation_page" data-transition="slideup">Geolocation</a></li>
+  <li data-icon="shop"><a href="#order_page" data-transition="slideup">Order Ice Cream</a></li>
+  <li data-icon="calendar"><a href="#calculate_page" data-transition="slideup">Calculate</a></li>
+        </ul>
+    </div>
+  </div>
+
+  <!-- Geolocation Page -->
+    <div data-role="page" id="geolocation_page" data-theme="a" class="jqm-demos" data-url="panel-fixed-page1">
+      <div data-role="header" data-position="fixed" data-theme="b">
+        <h1> Geolocation</h1>
+  	  <a href="#geo_nav_panel" data-icon="bars" data-iconpos="notext">Flavours</a>
+      </div>
+      <div data-role="main" class="ui-content jqm-content jqm-fullwidth" style="background: linear-gradient(to top,  #ffc4e1, #ff1489);">
+  		<center>
+  			<div class="" style="max-width:500px;margin-top:40px;">
+
+  				<br>
+  				<div id="mapid" style="width: 100%; height: 400px;"></div>
+  			</div>
+  		</center>
+  		<div class="geo_page" style="margin-bottom:50px;margin-top:50px;">
+  			<details>
+  				<summary><b>Happiness is a tub of ice cream!</b></summary>
+  				<div>
+  					<p><b>Opens:</b> 24/7</p>
+  					<p><b>Phone:</b> +230 794 5764</p>
+  					<p>Royal Road<br>Curepipe</p>
+  				</div>
+  			</details>
+
+  		</div>
+      </div>
+  	<!-- Panel -->
+      <div data-role="panel" data-position-fixed="true" data-display="push" data-theme="b" id="geo_nav_panel">
+        <ul data-role="listview">
+            <li data-icon="delete"><a href="#" data-rel="close">Close menu</a></li>
+            <li data-icon="home"><a href="#homepage" data-rel="close">Home</a></li>
+            <li data-icon="info"><a href="#info_page" data-transition="slideup">Things You Need to Know About AD ICREAM APP</a></li>
+            <li data-icon="location"><a href="#geolocation_page" data-transition="slideup">Geolocation</a></li>
+    <li data-icon="shop"><a href="#order_page" data-transition="slideup">Order Ice Cream</a></li>
+    <li data-icon="calendar"><a href="#calculate_page" data-transition="slideup">Calculate</a></li>
+          </ul>
+      </div>
+    </div>
+
+
+    <!--Track ORDER-->
+   	<div data-role="page" id="order_page" data-theme="a" class="jqm-demos" data-url="panel-fixed-page1">
+           <div data-role="header" data-position="fixed" data-theme="b">
+             <h1>Track Orders</h1>
+   		  <a href="#ins_nav_panel" data-icon="bars" data-iconpos="notext">Menu</a>
+   		  <div data-role="navbar">
+   			<ul>
+   			  <li><a href="#" data-icon="bullets">Track Orders</a></li>
+   			  <li><a href="#view_ins_page" data-transition="fade" data-icon="eye">View Order</a></li>
+
+   			</ul>
+   		  </div>
+           </div>
+           <div data-role="main" class="ui-content jqm-content jqm-fullwidth med_body">
+   			<h3 style="margin-top:50px;">Choose your flavours & Toppings: </h3>
+   			<hr style="margin-bottom:30px;">
+   			<form method="post" onSubmit="return submitInsForm()" style="margin-bottom:200px;">
+   				 <label class="ui-hidden-accessible">Date</label><input name="ins_date" type="date" placeholder="Date"required/>
+   				 <select id="ins_time" name="ins_time">
+             <option value="Chocolate">Chocolate</option>
+              <option value="Vanilla">Vanilla</option>
+            <option value="Mint">Mint</option>
+            <option value="Strawberry">Strawberry</option>
+            <option value="Butter Scotch">Butter Scotch</option>
+            <option value="Oreo">Oreo</option>
+   				</select>
+
+   				<select id="ins_type" name="ins_type">
+            <option value="Chocolate Sprinkles">Chocolate Sprinkles</option>
+            <option value="Haribo">Haribo</option>
+            <option value="Blue Berry Pops">Blue Berry Pops</option>
+            <option value="Peach Pops">Peach Pops</option>
+            <option value="Strawberry Pops">Strawberry Pops</option>
+   				</select>
+   			  <label class="ui-hidden-accessible">Amount</label><input name="ins_amount" type="number" placeholder="Scoop of Ice Cream" required/>
+   			  <select id="ins_location" name="ins_location">
+            <option value="Small">Small</option>
+            <option value="Medium">Medium</option>
+            <option value="Large">Large</option>
+           <option value="Lovers Package">Lovers Package</option>
+   				</select>
+   				 <input type="submit" value="ORDER"/>
+   			</form>
+
+          </div>
+          <div data-role="panel" id="ins_nav_panel" data-theme="b">
+            <ul data-role="listview">
+                <li data-icon="delete"><a href="#" data-rel="close">Close menu</a></li>
+                <li data-icon="home"><a href="#homepage" data-rel="close">Home</a></li>
+                <li data-icon="info"><a href="#info_page" data-transition="slideup">Things You Need to Know About AD ICREAM APP</a></li>
+                <li data-icon="location"><a href="#geolocation_page" data-transition="slideup">Geolocation</a></li>
+        <li data-icon="shop"><a href="#order_page" data-transition="slideup">Order Ice Cream</a></li>
+        <li data-icon="calendar"><a href="#calculate_page" data-transition="slideup">Calculate</a></li>
+              </ul>
+               </div>
+   		<script>
+   			function createInsDB(tx){
+   				tx.executeSql('CREATE TABLE IF NOT EXISTS insulin(ins_date date, ins_time TEXT, ins_type TEXT, ins_amount INT, ins_location TEXT)');
+   			}
+   			function insertInsDB(tx){
+   				var ins_date_c=$("[name='ins_date']").val();
+   				var ins_time_c=$("[name='ins_time']").val();
+   				var ins_type_c=$("[name='ins_type']").val();
+   				var ins_amount_c=$("[name='ins_amount']").val();
+   				var ins_location_c=$("[name='ins_location']").val();
+   				var sql='INSERT INTO insulin (ins_date, ins_time,ins_type,ins_amount,ins_location) VALUES (?,?,?,?,?)';
+   				tx.executeSql(sql,[ins_date_c, ins_time_c,ins_type_c,ins_amount_c,ins_location_c], successInsQueryDB, errorCB);
+   			}
+   			function successInsQueryDB(tx){
+   				alert("Order Placed Successfully!");
+   				tx.executeSql('SELECT * FROM insulin ORDER BY ins_date DESC ', [], renderListInsCB, errorCB);
+   			}
+   			function submitInsForm(){
+   				db.transaction(insertInsDB, errorCB);
+   				$.mobile.changePage("#view_ins_page", {reverse:false, transition:"slide"});
+   				return false;
+   			}
+   		 </script>
+   	</div>
+    <!-- View Order Ice Cream -->
+    <div data-role="page" id="view_ins_page" data-theme="a" class="med_body">
+            <div data-role="header" data-position="fixed" data-theme="b">
+              <h1>Orders</h1>
+    		  <div data-role="navbar">
+    			<ul>
+    			  <li><a href="#order_page" data-transition="fade" data-icon="bullets">Order Ice Cream</a></li>
+
+    			</ul>
+    		  </div>
+            </div>
+            <div data-role="main" class="ui-content jqm-content jqm-fullwidth">
+    			<h3>View Orders</h3>
+    			<hr>
+    		    <div id="insulin"></div>
+           </div>
+    	   <script>
+    			function renderListInsCB(tx, results){
+    				var htmlString = ' ';
+    				var len = results.rows.length;
+
+    				for(var i=0; i<len;i++){
+              htmlString+='<li style="list-style-type: square;">'+'<b>Date: </b>'+results.rows.item(i).ins_date+'</br><b>Flavours: </b>'
+    					+results.rows.item(i).ins_time+'<br><b>Toppings: </b>'+results.rows.item(i).ins_type+'<br><b>Scoop of Ice Cream: </b>'
+    					+results.rows.item(i).ins_amount+'<br><b>Choice: </b>'+results.rows.item(i).ins_location+'</li><hr>';
+
+    				}
+    				$('#insulin').html(htmlString);
+    			};
+
+    			var db = openDatabase("mysugarDB", "1.0", "Simple Demo", 2*1024*1024);
+    			db.transaction(function(tx){
+    				tx.executeSql('CREATE TABLE IF NOT EXISTS insulin(ins_date date, ins_time TEXT, ins_type TEXT, ins_amount INT, ins_location TEXT)');
+    			});
+
+    			db.transaction(function(tx){
+    				tx.executeSql('select * from insulin ORDER BY ins_date DESC',[],function(tx,results){
+    					var htmlString = ' ';
+    					var len = results.rows.length;
+    				for(var i=0; i<len;i++){
+              htmlString+='<li style="list-style-type: square;">'+'<b>Date: </b>'+results.rows.item(i).ins_date+'</br><b>Flavours: </b>'
+              +results.rows.item(i).ins_time+'<br><b>Toppings: </b>'+results.rows.item(i).ins_type+'<br><b>Scoop of Ice Cream: </b>'
+              +results.rows.item(i).ins_amount+'<br><b>Choice: </b>'+results.rows.item(i).ins_location+'</li><hr>';
+
+    				}
+    				$('#insulin').html(htmlString);
+    				});
+    			});
+    		</script>
+    </div>
+    <!-- Track BMI-->
+    <div data-role="page" id="calculate_page" data-theme="a" class="jqm-demos" data-url="panel-fixed-page1">
+            <div data-role="header" data-position="fixed" data-theme="b">
+              <h1>Calculate Discount</h1>
+    		  <a href="#cal_nav_panel" data-icon="bars" data-iconpos="notext">Flavours</a>
+    		  <div data-role="navbar">
+    			<ul>
+    			  <li><a href="#" data-icon="grid">Discount</a></li>
+
+    			</ul>
+    		  </div>
+            </div>
+            <div data-role="main" class="ui-content jqm-content jqm-fullwidth">
+    			<h3>Keep track of final cost</h3>
+    			<hr>
+    			<form method="post" onSubmit="return submitbmiForm()">
+    				<label class="ui-hidden-accessible">Date</label><input name="bmi_date" type="date" placeholder="Date"required/>
+    				<input type="text" name="weight" id="weight" placeholder=" Normal Price(Rs)" required/>
+    				<input type="text" name="height" id="height" placeholder=" Discounted Rate(%)">
+    				<a href="#result" class="ui-btn" value="CALCULATE" id="calculation" onclick="num1 = parseFloat(document.getElementById('weight').value);
+    					num2 = parseFloat(document.getElementById('height').value);
+    					bmi =num1-((num2/100)* num1);
+    					newbmi = bmi.toFixed(2);
+    					document.getElementById('bmi').value = newbmi;
+    					">CALCULATE</a>
+    				<p>Final Cost:</p>
+    				<input type="text" name="bmi" id="bmi">
+    				<label id="results"></label>
+
+    			</form>
+    			<label id="bmioutput"></label>
+    		</div>
+    		<div data-role="panel" id="cal_nav_panel" data-theme="b">
+          <ul data-role="listview">
+              <li data-icon="delete"><a href="#" data-rel="close">Close menu</a></li>
+              <li data-icon="home"><a href="#homepage" data-rel="close">Home</a></li>
+              <li data-icon="info"><a href="#info_page" data-transition="slideup">Things You Need to Know About AD ICREAM APP</a></li>
+              <li data-icon="location"><a href="#geolocation_page" data-transition="slideup">Geolocation</a></li>
+      <li data-icon="shop"><a href="#order_page" data-transition="slideup">Order Ice Cream</a></li>
+      <li data-icon="calendar"><a href="#calculate_page" data-transition="slideup">Calculate</a></li>
+            </ul> 
+            </div>
+    		<script>
+
+
+    			function createbmiDB(tx){
+    				tx.executeSql('CREATE TABLE IF NOT EXISTS bmi(bmi_date date, height float,weight float,bmi float)');
+    			}
+
+    			function insertbmiDB(tx){
+    				var bmi_date_c=$("[name='bmi_date']").val();
+    				var height_c=$("[name='height']").val();
+    				var weight_c=$("[name='weight']").val();
+    				var bmi_c=$("[name='bmi']").val();
+    				var sql='INSERT INTO bmi (bmi_date,height,weight,bmi) VALUES (?,?,?,?)';
+    				tx.executeSql(sql,[bmi_date_c,height_c,weight_c,bmi_c], successbmiQueryDB, errorCB);
+    			}
+    			function successbmiQueryDB(tx){
+    				//alert("Insert Successful");
+    				tx.executeSql('SELECT * FROM bmi ORDER BY bmi_date DESC ', [], renderbmiListCB, errorCB);
+    			}
+    			function renderbmiListCB(tx, results){
+    				var len = results.rows.length;
+    				var s ='<table id="htmlTable" class="htmlTable" cellpadding="5" border="1" style="border-collapse:collapse">'
+    				s += '<tr><th>Date</th><th>Height</th><th>Weight</th><th>BMI</th></tr>';
+    				for(var i=0; i<len;i++){
+    				var bmi =results.rows.item(i);
+    				s +='<tr>';
+    				s += '<td>'+ bmi.bmi_date+  '</td>';
+    				s += '<td>' + bmi.height+ '</td>';
+    				s += '<td>' + bmi.weight+ '</td>';
+    				s += '<td>' + bmi.bmi+ '</td>';
+    				s += '</tr>';
+    				}
+    				s += '</table>';
+    				$('#bmioutput').html(s);
+    			};
+    			db.transaction(function(tx){
+    				tx.executeSql('SELECT * FROM bmi ORDER BY bmi_date DESC ',[],function(tx,results){
+    				var len = results.rows.length;
+    				var s ='<table id="htmlTable" class="htmlTable" cellpadding="5" border="1" style="border-collapse:collapse">'
+    				s += '<tr><th>Date</th><th>Normal price</th><th>Discounted rate</th><th>Final Cost</th></tr>';
+    				for(var i=0; i<len;i++){
+    					var bmi =results.rows.item(i);
+    					s +='<tr>';
+    					s += '<td>'+ bmi.bmi_date+  '</td>';
+    					s += '<td>' + bmi.height+ '</td>';
+    					s += '<td>' + bmi.weight+ '</td>';
+    					s += '<td>' + bmi.bmi+ '</td>';
+    					s += '</tr>';
+    				}
+    				s += '</table>';
+    				$('#bmioutput').html(s)
+    				});
+    			});
+    			function submitbmiForm(){
+    				db.transaction(insertbmiDB, errorCB);
+    				$.mobile.changePage("#cal_page", {reverse:false, transition:"slide"});
+    				return false;
+    			}
+    		</script>
+    </div>
+
+    <!-- View Exercise-->
+</body>
+<html>
+<script>
+var myIndex = 0;
+carousel();
+function carousel() {
+  var i;
+  var x = document.getElementsByClassName("mySlides");
+  for (i = 0; i < x.length; i++) {
+    x[i].style.display = "none";
+  }
+  myIndex++;
+  if (myIndex > x.length) {myIndex = 1}
+  x[myIndex-1].style.display = "block";
+  setTimeout(carousel, 2000); // Change image every 2 seconds
+}
+</script>
+<script>
+
+var mymap = L.map('mapid').setView([-20.3171, 57.5265], 10);
+L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}'
+, {
+
+maxZoom: 19,
+attribution: 'Map data &copy;'+
+'<a href="https://www.openstreetmap.org/">OpenStreetMap</a>'+
+'contributors,<a href="https://creativecommons.org/licenses'+
+'/by-sa/2.0/">CC-BY-SA</a>,Imagery © <a href="https://'+
+'www.mapbox.com/">Mapbox</a>',
+id: 'mapbox/streets-v11',
+
+tileSize: 512,
+zoomOffset: -1,
+accessToken:'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYyc'+
+'XBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw'
+
+}).addTo(mymap);
+
+var marker8 = L.marker([-20.3171, 57.5265]).addTo(mymap);
+marker8.bindPopup("AD ICREAM ").openPopup();
+
+
+
+
+</script>
